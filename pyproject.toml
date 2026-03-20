@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/fantasy_draft_ai"]
+packages = ["src/ff_ai_assistant"]
 
 [project]
-name = "fantasy-draft-ai"
+name = "ff_ai_assistant"
 version = "0.2.0"
-description = "ML-powered fantasy football draft assistant"
+description = "ML-powered fantasy football assistant"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 dependencies = [
     "langchain",
     "langchain-community",

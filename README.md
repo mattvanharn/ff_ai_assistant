@@ -49,19 +49,17 @@ Answer + Reasoning
 | ADP data | FantasyPros |
 | Scoring | Half-PPR |
 | Testing | pytest |
-| Python version | 3.11 via pyenv |
+| Python version | 3.14+ (see `pyproject.toml` and `.python-version`) |
 
 ## Setup
 
 ```bash
 # Clone the repo
-git clone https://github.com/mattvanharn/fantasy-draft-ai.git
-cd fantasy-draft-ai
-
-# Set Python version (requires pyenv)
-pyenv local 3.11.14
+git clone https://github.com/mattvanharn/ff_ai_assistant.git
+cd ff_ai_assistant
 
 # Install uv (Arch: sudo pacman -S uv), then install dependencies
+# uv picks a compatible Python using .python-version and pyproject.toml
 uv sync
 
 # Configure environment
