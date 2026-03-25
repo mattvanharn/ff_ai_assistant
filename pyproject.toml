@@ -17,7 +17,7 @@ dependencies = [
     "langchain-chroma",
     "langchain-groq",
     "langchain-ollama",
-    "chromadb",
+    "chromadb>=1.5.5",  # 1.5.2 and older break on Python 3.14 + Pydantic 2.12+ (chroma #5996)
     "sentence-transformers",
     "nflreadpy",
     "python-dotenv",

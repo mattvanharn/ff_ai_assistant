@@ -22,15 +22,32 @@ weekly_stats = weekly_stats.with_columns(
     )
 )
 
-# Sum the fantasy points for each player to get a total for the season
+# One row per player-season (no team in group_by — trades would split rows and break totals/ranks)
+weekly_stats = weekly_stats.sort(["season", "player_id", "week"])
 season_stats = weekly_stats.group_by(
-    ["player_id", "player_display_name", "position", "season", "team"]
+    ["player_id", "player_display_name", "position", "season"]
 ).agg(
     pl.col("fantasy_points_half_ppr").sum().alias("seasonal_fantasy_points"),
     pl.col("fantasy_points_half_ppr").mean().alias("seasonal_fantasy_points_mean"),
     pl.col("fantasy_points_half_ppr").median().alias("seasonal_fantasy_points_median"),
     pl.col("fantasy_points_half_ppr").max().alias("seasonal_fantasy_points_max"),
     pl.col("fantasy_points_half_ppr").min().alias("seasonal_fantasy_points_min"),
+    pl.col("team").last().alias("team"),
+)
+
+# Finish ranks: 1 = most points that season. Ties share the same rank (method="min").
+# overall = all positions; positional = within QB/RB/WR/TE/K/DST for that season.
+season_stats = season_stats.with_columns(
+    pl.col("seasonal_fantasy_points")
+    .rank(method="min", descending=True)
+    .over("season")
+    .cast(pl.Int32)
+    .alias("overall_points_rank"),
+    pl.col("seasonal_fantasy_points")
+    .rank(method="min", descending=True)
+    .over(["season", "position"])
+    .cast(pl.Int32)
+    .alias("position_points_rank"),
 )
 
 # Save the season stats and weekly stats

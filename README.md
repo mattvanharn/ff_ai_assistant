@@ -1,65 +1,65 @@
 # Fantasy Football AI Assistant
 
-An ML-powered fantasy football assistant that uses deep learning projections, analytics, and a RAG-backed natural language interface to provide draft recommendations, trade analysis, and waiver wire targets — grounded in real stats, ADP data, and historical patterns.
+An ML-powered fantasy football assistant that uses a natural language interface over structured historical data, deep learning projections, and analytics to provide draft recommendations, trade analysis, and waiver wire targets.
 
 ## What It Does
 
 Ask questions like:
 
-- "Who are the best value RBs to target in rounds 3-5?"
-- "Is Ja'Marr Chase worth his ADP this year?"
-- "How often do first-round RBs finish as RB1?"
-- "Who are some late-round breakout candidates based on historical patterns?"
+- "Who were the top 5 RBs in 2024?"
+- "Which players had an ADP under 50 but finished outside the top 100?"
+- "Compare Saquon Barkley's last 3 seasons side by side"
+- "How many WRs scored over 200 half-PPR points in the last 5 years?"
 
-The system generates player projections using a deep learning model trained on historical data, computes value-based draft recommendations, and explains its reasoning using retrieved historical comparables.
+The system converts natural language into SQL, executes it against the historical database, and summarizes the results in plain English. Future phases add ML projections and analytics (VOR, draft optimizer, trade evaluator).
 
 ## Architecture
 
 ```
 Question
     ↓
-┌───┴────────────────────────────────┐
-│                                    │
-│  ML Projections    Analytics       │
-│  (PyTorch model)   (VOR, scarcity) │
-│       ↓                ↓           │
-│  Projected pts    Draft optimizer  │
-│                                    │
-│  RAG Layer                         │
-│  (historical comparables)          │
-│                                    │
-└───┬────────────────────────────────┘
+LLM router (future: SQL vs RAG)
     ↓
-LLM synthesis (Groq)
+┌─────────────────────────────────────┐
+│  Text-to-SQL (Phase 1 — current)    │
+│  NL → SQL → SQLite → LLM summary   │
+│                                     │
+│  ML Projections (Phase 2)           │
+│  Features → PyTorch → projected pts │
+│                                     │
+│  Analytics (Phase 2)                │
+│  VOR, draft optimizer, trade eval   │
+│                                     │
+│  RAG (Phase 3 — deferred)           │
+│  In-season articles & reports       │
+└─────────────────────────────────────┘
     ↓
-Answer + Reasoning
+Answer
 ```
 
 ## Tech Stack
 
 | Component | Tool |
 |-----------|------|
-| ML framework | PyTorch |
 | Data processing | Polars |
-| RAG framework | LangChain |
-| Vector database | ChromaDB |
-| Embeddings | sentence-transformers (`all-MiniLM-L6-v2`) |
+| Database | SQLite (in-memory from parquets) |
 | LLM | Groq API |
+| NL interface | LangChain |
+| ML framework | PyTorch (Phase 2) |
 | Player stats | nflreadpy |
 | ADP data | FantasyPros |
 | Scoring | Half-PPR |
 | Testing | pytest |
-| Python version | 3.14+ (see `pyproject.toml` and `.python-version`) |
+| Package manager | uv |
+| Python version | 3.14+ |
 
 ## Setup
 
 ```bash
-# Clone the repo
 git clone https://github.com/mattvanharn/ff_ai_assistant.git
 cd ff_ai_assistant
 
 # Install uv (Arch: sudo pacman -S uv), then install dependencies
-# uv picks a compatible Python using .python-version and pyproject.toml
 uv sync
 
 # Configure environment
@@ -74,10 +74,11 @@ Run scripts with `uv run python scripts/fetch_stats.py`.
 | Phase | Status | Description |
 |-------|--------|-------------|
 | 1. Data pipeline | Done | Fetch scripts, exploration notebook, processed parquets |
-| 2. Feature engineering | In progress | ML features from historical data |
-| 3. Projection model | Planned | PyTorch model for next-season fantasy points |
-| 4. Analytics layer | Planned | VOR, draft optimizer, trade evaluator |
-| 5. RAG + LLM interface | Planned | Natural language Q&A over projections + history |
+| 2. Text-to-SQL | In progress | NL → SQL → answer over historical stats |
+| 3. Feature engineering | Planned | ML features from historical + weekly data |
+| 4. Projection model | Planned | PyTorch model for next-season fantasy points |
+| 5. Analytics layer | Planned | VOR, draft optimizer, trade evaluator |
+| 6. RAG (deferred) | Future | In-season unstructured text when corpus exists |
 
 ## License
 
