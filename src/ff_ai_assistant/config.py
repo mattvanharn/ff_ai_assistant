@@ -44,6 +44,8 @@ PATIENCE = 15
 
 # ---------------------------------------------------------------------------
 # RAG settings (deferred — not used until an unstructured corpus exists)
+# Previous RAG attempt over templated player-season summaries was abandoned;
+# future RAG will target unstructured text (articles, Reddit, Twitter).
 # ---------------------------------------------------------------------------
 CHROMA_DIR = PROJECT_ROOT / "data" / "chroma"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
