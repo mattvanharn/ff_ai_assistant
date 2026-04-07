@@ -31,27 +31,8 @@ ROSTER_SLOTS = {
 POSITIONS = ["QB", "RB", "WR", "TE", "K", "DST"]
 
 # LLM settings
-GROQ_MODEL = "qwen/qwen3-32b"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 GROQ_TEMPERATURE = 0.0
-SQL_GENERATION_PROMPT = """You are an expert SQLite query writer for fantasy football analysis.
-Database schema:
-{schema}
-Sample rows from player_seasons:
-{sample_data}
-Rules:
-- Return ONLY SQL. No explanation. No markdown fences.
-- Generate ONLY a single SELECT query.
-- Use only tables/columns that exist in schema.
-- Use player_display_name for player names.
-- seasonal_fantasy_points is half-PPR points.
-- adp is average draft position (lower means earlier draft pick).
-- season is integer (e.g., 2024).
-- position values are abbreviations (QB, RB, WR, TE, K, DST).
-- Use ORDER BY for ranking questions (best/top/worst).
-- Unless user asks otherwise, include LIMIT 20.
-- If comparing players/seasons, include relevant identifying columns.
-Question: {question}
-SQL:"""
 
 # ML model hyperparameters
 TRAIN_SEASONS = list(range(2018, 2024))  # 2018-2023
