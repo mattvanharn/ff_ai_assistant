@@ -48,7 +48,8 @@ Answer
 | Database | SQLite (in-memory from parquets) |
 | LLM | Groq API |
 | NL interface | LangChain |
-| ML framework | PyTorch (Phase 2) |
+| ML (primary) | XGBoost / LightGBM (Phase 2) |
+| ML (comparison) | PyTorch feedforward NN (Phase 2) |
 | Player stats | nflreadpy |
 | ADP data | FantasyPros |
 | Scoring | Half-PPR |

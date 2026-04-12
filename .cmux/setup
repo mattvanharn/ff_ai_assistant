@@ -7,6 +7,17 @@ set -euo pipefail
 
 echo "Setting up ff_ai_assistant worktree..."
 
+# Copy CLAUDE.md from the main repo if it exists there and not here.
+# git rev-parse --git-common-dir returns the main repo's .git path (absolute),
+# so its parent is the main repo root.
+_main_repo="$(dirname "$(git rev-parse --git-common-dir)")"
+if [[ -f "$_main_repo/CLAUDE.md" && ! -f "CLAUDE.md" ]]; then
+  cp "$_main_repo/CLAUDE.md" "CLAUDE.md"
+  echo "Copied CLAUDE.md from main repo."
+elif [[ ! -f "CLAUDE.md" ]]; then
+  echo "WARNING: No CLAUDE.md found in main repo or worktree. Create one at the main repo root."
+fi
+
 # Sync dependencies from pyproject.toml into the venv
 if command -v uv >/dev/null 2>&1; then
   echo "Syncing uv dependencies..."

@@ -1,16 +1,14 @@
-"""SQLite database layer for text-to-SQL queries.
+"""DuckDB database layer for text-to-SQL queries.
 
-Loads processed parquet files into an in-memory SQLite database so the LLM
-can generate and execute SQL queries against structured fantasy football data.
+Queries parquet files directly via DuckDB's native parquet support —
+no pandas conversion needed.
 
 Tables created:
     player_seasons — one row per player per season (points, ranks, ADP, etc.)
     weekly_stats   — one row per player per week (detailed game-level stats)
 """
 
-import sqlite3
-
-import polars as pl
+import duckdb
 
 from ff_ai_assistant.config import (
     COMBINED_PARQUET,
@@ -18,26 +16,89 @@ from ff_ai_assistant.config import (
     POSITIONS,
 )
 
+_WEEKLY_STATS_SCHEMA = """Table: weekly_stats
+    -- Identity (all players)
+    player_id (VARCHAR), player_name (VARCHAR), player_display_name (VARCHAR)
+    position (VARCHAR), season (BIGINT), week (BIGINT)
+    team (VARCHAR), opponent_team (VARCHAR), game_id (VARCHAR)
 
-def _create_connection() -> sqlite3.Connection:
-    """Create an in-memory SQLite database and load parquet data into it."""
-    conn = sqlite3.connect(":memory:")
+    -- Fantasy scoring
+    fantasy_points_half_ppr (DOUBLE), fantasy_points (DOUBLE),
+  fantasy_points_ppr (DOUBLE)
 
-    combined = pl.read_parquet(COMBINED_PARQUET)
-    combined = combined.filter(pl.col("position").is_in(POSITIONS))
-    combined.to_pandas().to_sql("player_seasons", conn, index=False, if_exists="replace")
+    -- Passing (QBs; occasionally WR/RB on trick plays)
+    completions (BIGINT), attempts (BIGINT), passing_yards (BIGINT),
+  passing_tds (BIGINT)
+    passing_interceptions (BIGINT), passing_air_yards (BIGINT),
+  passing_yards_after_catch (BIGINT)
+    passing_first_downs (BIGINT), passing_epa (DOUBLE), passing_cpoe (DOUBLE)
+    passing_2pt_conversions (BIGINT), sacks_suffered (BIGINT),
+  sack_yards_lost (BIGINT)
+    sack_fumbles (BIGINT), sack_fumbles_lost (BIGINT), pacr (DOUBLE)
 
-    weekly = pl.read_parquet(WEEKLY_PARQUET)
-    weekly = weekly.filter(pl.col("position").is_in(POSITIONS))
-    weekly.to_pandas().to_sql("weekly_stats", conn, index=False, if_exists="replace")
+    -- Rushing (QBs and RBs; occasionally WR/TE on designed plays)
+    carries (BIGINT), rushing_yards (BIGINT), rushing_tds (BIGINT)
+    rushing_fumbles (BIGINT), rushing_fumbles_lost (BIGINT)
+    rushing_first_downs (BIGINT), rushing_epa (DOUBLE),
+  rushing_2pt_conversions (BIGINT)
+    special_teams_tds (BIGINT)
+
+    -- Receiving (WRs, TEs, RBs)
+    receptions (BIGINT), targets (BIGINT), receiving_yards (BIGINT),
+  receiving_tds (BIGINT)
+    receiving_air_yards (BIGINT), receiving_yards_after_catch (BIGINT)
+    receiving_fumbles (BIGINT), receiving_fumbles_lost (BIGINT)
+    receiving_first_downs (BIGINT), receiving_epa (DOUBLE),
+  receiving_2pt_conversions (BIGINT)
+    racr (DOUBLE), target_share (DOUBLE), air_yards_share (DOUBLE), wopr
+  (DOUBLE)
+
+    -- Kicking (Ks only)
+    fg_made (BIGINT), fg_att (BIGINT), fg_missed (BIGINT), fg_blocked
+  (BIGINT)
+    fg_long (BIGINT), fg_pct (DOUBLE)
+    fg_made_0_19 (BIGINT), fg_made_20_29 (BIGINT), fg_made_30_39 (BIGINT)
+    fg_made_40_49 (BIGINT), fg_made_50_59 (BIGINT), fg_made_60_ (BIGINT)
+    fg_missed_0_19 (BIGINT), fg_missed_20_29 (BIGINT), fg_missed_30_39
+  (BIGINT)
+    fg_missed_40_49 (BIGINT), fg_missed_50_59 (BIGINT), fg_missed_60_
+  (BIGINT)
+    fg_made_distance (BIGINT), fg_missed_distance (BIGINT),
+  fg_blocked_distance (BIGINT)
+    fg_made_list (VARCHAR), fg_missed_list (VARCHAR), fg_blocked_list
+  (VARCHAR)
+    pat_made (BIGINT), pat_att (BIGINT), pat_missed (BIGINT)
+    pat_blocked (BIGINT), pat_pct (DOUBLE)
+
+    -- Note: individual defensive player stats available via def_* columns
+  (not standard fantasy)"""
+
+
+def _create_connection() -> duckdb.DuckDBPyConnection:
+    """Create an in-memory DuckDB database and load parquet data into it."""
+    conn = duckdb.connect()
+
+    positions_sql = ", ".join(f"'{p}'" for p in POSITIONS)
+
+    conn.execute(f"""
+        CREATE TABLE player_seasons AS
+        SELECT * FROM read_parquet('{COMBINED_PARQUET}')
+        WHERE position IN ({positions_sql})
+    """)
+
+    conn.execute(f"""
+        CREATE TABLE weekly_stats AS
+        SELECT * FROM read_parquet('{WEEKLY_PARQUET}')
+        WHERE position IN ({positions_sql})
+    """)
 
     return conn
 
 
-_conn: sqlite3.Connection | None = None
+_conn: duckdb.DuckDBPyConnection | None = None
 
 
-def get_connection() -> sqlite3.Connection:
+def get_connection() -> duckdb.DuckDBPyConnection:
     """Return a cached database connection (created once per process)."""
     global _conn  # noqa: PLW0603
     if _conn is None:
@@ -52,19 +113,12 @@ def get_schema() -> str:
     This introspects the database and formats the schema as text.
     """
     conn = get_connection()
-    cursor = conn.cursor()
+    # player_seasons: show all columns via DESCRIBE (25 columns, all relevant)
+    columns = conn.execute("DESCRIBE player_seasons").fetchall()
+    col_lines = [f" {col[0]} ({col[1]})" for col in columns]
+    player_seasons_schema = "Table: player_seasons\n" + "\n".join(col_lines)
 
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    tables = [row[0] for row in cursor.fetchall()]
-
-    parts = []
-    for table in tables:
-        cursor.execute(f"PRAGMA table_info({table})")
-        columns = cursor.fetchall()
-        col_lines = [f"  {col[1]} ({col[2]})" for col in columns]
-        parts.append(f"Table: {table}\n" + "\n".join(col_lines))
-
-    return "\n\n".join(parts)
+    return player_seasons_schema + "\n\n" + _WEEKLY_STATS_SCHEMA
 
 
 def get_sample_rows(table: str, n: int = 3) -> str:
@@ -74,10 +128,9 @@ def get_sample_rows(table: str, n: int = 3) -> str:
     'position' contains 'QB', 'RB', not full words like 'Quarterback').
     """
     conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM {table} LIMIT {n}")  # noqa: S608
-    rows = cursor.fetchall()
-    col_names = [desc[0] for desc in cursor.description]
+    result = conn.execute(f"SELECT * FROM {table} LIMIT {n}")  # noqa: S608
+    col_names = [desc[0] for desc in result.description]
+    rows = result.fetchall()
 
     lines = [", ".join(col_names)]
     for row in rows:
@@ -98,11 +151,9 @@ def execute_query(sql: str) -> list[dict]:
         raise ValueError("Only SELECT queries are allowed")
 
     conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(sql)
-
-    col_names = [desc[0] for desc in cursor.description]
-    rows = cursor.fetchall()
+    result = conn.execute(sql)
+    col_names = [desc[0] for desc in result.description]
+    rows = result.fetchall()
     return [dict(zip(col_names, row)) for row in rows]
 
 
