@@ -11,7 +11,7 @@
     {
       "id": "ranking_001",
       "question": "Who were the top 10 QBs by half-PPR fantasy points in 2024?",
-      "sql": "SELECT player_display_name, seasonal_fantasy_points FROM player_seasons WHERE position = 'QB' AND season = 2024 ORDER BY seasonal_fantasy_points DESC LIMIT 10",
+      "sql": "SELECT player_display_name, seasonal_fantasy_points_sleeper_half_ppr FROM player_seasons WHERE position = 'QB' AND season = 2024 ORDER BY seasonal_fantasy_points_sleeper_half_ppr DESC LIMIT 10",
       "category": "ranking",
       "difficulty": "easy",
       "verified": true
@@ -19,7 +19,7 @@
     {
       "id": "timeseries_001",
       "question": "Give me Ja'Marr Chase's weekly scoring for all of 2023.",
-      "sql": "SELECT week, fantasy_points_half_ppr FROM weekly_stats WHERE player_display_name = 'Ja''Marr Chase' AND season = 2023 ORDER BY week",
+      "sql": "SELECT week, fantasy_points_sleeper_half_ppr FROM weekly_stats WHERE player_display_name = 'Ja''Marr Chase' AND season = 2023 ORDER BY week",
       "category": "time_series",
       "difficulty": "easy",
       "verified": true
@@ -27,7 +27,7 @@
     {
       "id": "filter_001",
       "question": "Give me all of the players with 35+ point weeks in 2025.",
-      "sql": "SELECT player_display_name, position, week, fantasy_points_half_ppr FROM weekly_stats WHERE fantasy_points_half_ppr >= 35 AND season = 2025 ORDER BY fantasy_points_half_ppr DESC",
+      "sql": "SELECT player_display_name, position, week, fantasy_points_sleeper_half_ppr FROM weekly_stats WHERE fantasy_points_sleeper_half_ppr >= 35 AND season = 2025 ORDER BY fantasy_points_sleeper_half_ppr DESC",
       "category": "filter",
       "difficulty": "easy",
       "verified": true
