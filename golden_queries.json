@@ -11,7 +11,7 @@
     {
       "id": "ranking_001",
       "question": "Who were the top 10 QBs by half-PPR fantasy points in 2024?",
-      "sql": "SELECT player_display_name, seasonal_fantasy_points FROM player_seasons WHERE position = 'QB' AND season = 2024 ORDER BY seasonal_fantasy_points DESC LIMIT 10",
+      "sql": "SELECT player_display_name, seasonal_fantasy_points_sleeper_half_ppr FROM player_seasons WHERE position = 'QB' AND season = 2024 ORDER BY seasonal_fantasy_points_sleeper_half_ppr DESC LIMIT 10",
       "category": "ranking",
       "difficulty": "easy",
       "verified": true
