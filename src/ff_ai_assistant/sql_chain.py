@@ -43,10 +43,9 @@ Rules:
 - For player names with apostrophes, use two single quotes: 'Ja''Marr Chase'.
 - Use DuckDB/PostgreSQL syntax. Do not use SQLite-specific functions.
 
-Domain notes:
+Domain notesk:
 - ADP = Average Draft Position. Lower ADP = earlier draft pick = higher expected value.
-- Fantasy points columns follow the pattern fantasy_points_{platform}_{format} (weekly) and seasonal_fantasy_points_{platform}_{format} (season total).
-- Platforms: espn, yahoo, sleeper. Formats: standard, half_ppr, ppr.
+- Fantasy points columns follow the pattern fantasy_points_{{platform}}_{{format}} (weekly) and seasonal_fantasy_points_{{platform}}_{{format}} (season total). Platforms: espn, yahoo, sleeper. Formats: standard, half_ppr, ppr.
 - Default columns (use when no platform/format is specified): fantasy_points_sleeper_half_ppr (weekly), seasonal_fantasy_points_sleeper_half_ppr (season total).
 - Ranks (overall_points_rank, position_points_rank) are based on sleeper_half_ppr scoring.
 - Key platform difference: Yahoo INT penalty is -1pt; ESPN and Sleeper INT penalty is -2pt. This noticeably affects QB scoring.
