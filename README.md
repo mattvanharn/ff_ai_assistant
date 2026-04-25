@@ -1,5 +1,7 @@
 # Fantasy Football AI Assistant
 
+[![CI](https://github.com/mattvanharn/ff_ai_assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/mattvanharn/ff_ai_assistant/actions)
+
 An ML-powered fantasy football assistant that uses a natural language interface over structured historical data, deep learning projections, and analytics to provide draft recommendations, trade analysis, and waiver wire targets.
 
 ## What It Does
