@@ -534,6 +534,7 @@ dev = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "ipykernel" },
     { name = "pytest" },
     { name = "ruff" },
 ]
@@ -567,6 +568,7 @@ provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "ipykernel", specifier = ">=7.2.0" },
     { name = "pytest" },
     { name = "ruff" },
 ]
